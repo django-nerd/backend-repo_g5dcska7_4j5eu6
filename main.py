@@ -1,8 +1,13 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Optional
 
-app = FastAPI()
+from database import create_document
+from schemas import ContactInquiry
+
+app = FastAPI(title="BCX API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,11 +19,61 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello from FastAPI Backend!"}
+    return {"message": "BCX Backend Running"}
 
 @app.get("/api/hello")
 def hello():
-    return {"message": "Hello from the backend API!"}
+    return {"message": "Hello from the BCX backend API!"}
+
+@app.get("/api/services")
+def get_services():
+    services = [
+        {
+            "key": "landing",
+            "name": "Landing Pages",
+            "tagline": "High-converting single-page sites",
+            "features": [
+                "Modern responsive design",
+                "Fast load times",
+                "SEO friendly sections",
+                "Contact & lead capture"
+            ],
+            "price": 399
+        },
+        {
+            "key": "multipage",
+            "name": "Multi‑page Websites",
+            "tagline": "Full company sites with multiple pages",
+            "features": [
+                "Up to 6 core pages",
+                "CMS-ready structure",
+                "Blog/news setup",
+                "Analytics & SEO basics"
+            ],
+            "price": 1299
+        },
+        {
+            "key": "shop",
+            "name": "Shop Pages",
+            "tagline": "E‑commerce storefronts that sell",
+            "features": [
+                "Product catalog & search",
+                "Checkout integration",
+                "Promo banners & coupons",
+                "Order notifications"
+            ],
+            "price": 1999
+        }
+    ]
+    return {"services": services}
+
+@app.post("/api/contact")
+def submit_contact(inquiry: ContactInquiry):
+    try:
+        doc_id = create_document("contactinquiry", inquiry)
+        return {"status": "ok", "id": doc_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/test")
 def test_database():
